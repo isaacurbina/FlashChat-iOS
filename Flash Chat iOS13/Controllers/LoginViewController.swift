@@ -24,7 +24,7 @@ class LoginViewController: UIViewController {
 					print(e.localizedDescription)
 				} else {
 					// Navigate to the ChatViewController
-					strongSelf.performSegue(withIdentifier: "LoginToChat", sender: self)
+					strongSelf.performSegue(withIdentifier: Constants.loginSegue, sender: self)
 				}
 			}
 		}
