@@ -8,9 +8,11 @@
 
 import UIKit
 import FirebaseAuth
+import FirebaseFirestore
 
 class ChatViewController: UIViewController {
-
+	
+	let db = Firestore.firestore()
 	var messages: [Message] = [
 		Message(sender: "1@2.com", body: "Hey!"),
 		Message(sender: "1@2.com", body: "Hello!"),
@@ -18,30 +20,42 @@ class ChatViewController: UIViewController {
 	]
 	
 	// MARK: - Outlets
-    @IBOutlet weak var tableView: UITableView!
-    @IBOutlet weak var messageTextfield: UITextField!
+	@IBOutlet weak var tableView: UITableView!
+	@IBOutlet weak var messageTextfield: UITextField!
 	
 	// MARK: - UIViewController
-    override func viewDidLoad() {
-        super.viewDidLoad()
+	override func viewDidLoad() {
+		super.viewDidLoad()
 		title = Constants.appName
 		tableView.dataSource = self
 		navigationItem.hidesBackButton = true
 		
 		tableView.register(UINib(nibName: Constants.cellNibName, bundle: nil), forCellReuseIdentifier: Constants.cellIdentifier)
-    }
-    
+	}
+	
 	// MARK: - Actions
-    @IBAction func sendPressed(_ sender: UIButton) {
-    }
-    
+	@IBAction func sendPressed(_ sender: UIButton) {
+		if let messageBody = messageTextfield.text, let messageSender = Auth.auth().currentUser?.email {
+			db.collection(Constants.FStore.collectionName).addDocument(data: [
+				Constants.FStore.senderField: messageSender,
+				Constants.FStore.bodyField: messageBody
+			]) { (error) in
+				if let e = error {
+					print("There was an issue saving data to firestore, \(e)")
+				} else {
+					print("Successfully saved data.")
+				}
+			}
+		}
+	}
+	
 	@IBAction func logOutPressed(_ sender: UIBarButtonItem) {
 		let firebaseAuth = Auth.auth()
 		do {
-		  try firebaseAuth.signOut()
+			try firebaseAuth.signOut()
 			navigationController?.popToRootViewController(animated: true)
 		} catch let signOutError as NSError {
-		  print("Error signing out: %@", signOutError)
+			print("Error signing out: %@", signOutError)
 		}
 	}
 }
