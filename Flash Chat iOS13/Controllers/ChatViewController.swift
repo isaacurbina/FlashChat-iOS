@@ -13,11 +13,7 @@ import FirebaseFirestore
 class ChatViewController: UIViewController {
 	
 	let db = Firestore.firestore()
-	var messages: [Message] = [
-		Message(sender: "1@2.com", body: "Hey!"),
-		Message(sender: "1@2.com", body: "Hello!"),
-		Message(sender: "1@2.com", body: "What's up?")
-	]
+	var messages: [Message] = []
 	
 	// MARK: - Outlets
 	@IBOutlet weak var tableView: UITableView!
@@ -31,6 +27,8 @@ class ChatViewController: UIViewController {
 		navigationItem.hidesBackButton = true
 		
 		tableView.register(UINib(nibName: Constants.cellNibName, bundle: nil), forCellReuseIdentifier: Constants.cellIdentifier)
+		
+		loadMessages()
 	}
 	
 	// MARK: - Actions
@@ -56,6 +54,31 @@ class ChatViewController: UIViewController {
 			navigationController?.popToRootViewController(animated: true)
 		} catch let signOutError as NSError {
 			print("Error signing out: %@", signOutError)
+		}
+	}
+	
+	// MARK: - Private functions
+	private func loadMessages() {
+		messages = []
+		
+		db.collection(Constants.FStore.collectionName).getDocuments { (querySnapshot, error) in
+			if let e = error {
+				print("There wsa an issue retrieving data from Firestore. \(e)")
+			} else {
+				if let snapshotDocuments = querySnapshot?.documents {
+					for doc in snapshotDocuments {
+						let data = doc.data()
+						if let sender = data[Constants.FStore.senderField] as? String, let body = data[Constants.FStore.bodyField] as? String {
+							let newMessage = Message(sender: sender, body: body)
+							self.messages.append(newMessage)
+							
+							DispatchQueue.main.async {
+								self.tableView.reloadData()
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
